@@ -150,7 +150,7 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
 
     private function generateUuidsToReplaceIds()
     {
-        $fetchs = $this->connection->fetchAll('SELECT id from ' . $this->table);
+        $fetchs = $this->connection->fetchAll('SELECT id from ' . $this->table.' order by id');
         if (\count($fetchs) > 0) {
             $this->write('-> Generating ' . \count($fetchs) . ' UUID(s)...');
             foreach ($fetchs as $fetch) {
@@ -170,7 +170,7 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
         $this->write('-> Adding UUIDs to tables with foreign keys...');
         foreach ($this->fks as $fk) {
             $selectPk = implode(',', $fk['primaryKey']);
-            $fetchs = $this->connection->fetchAll('SELECT ' . $selectPk . ', ' . $fk['key'] . ' FROM ' . $fk['table']);
+            $fetchs = $this->connection->fetchAll('SELECT ' . $selectPk . ', ' . $fk['key'] . ' FROM ' . $fk['table'].' order by '. $selectPk);
             if (\count($fetchs) > 0) {
                 $this->write('  * Adding ' . \count($fetchs) . ' UUIDs to "' . $fk['table'] . '.' . $fk['key'] . '"...');
                 foreach ($fetchs as $fetch) {
