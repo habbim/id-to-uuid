@@ -23,6 +23,7 @@
 namespace Habbim\IdToUuid;
 
 use Doctrine\Common\Persistence\ObjectManager;
+use Doctrine\DBAL\ParameterType;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\Table;
@@ -156,7 +157,7 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
                 $id = $fetch['id'];
                 $uuid = $this->generator->generate($this->em, null);
                 $this->idToUuidMap[$id] = $uuid;
-                $this->connection->update($this->table, ['uuid' => $uuid->getBytes()], ['id' => $id],['uuid' => 'binary']);
+                $this->connection->update($this->table, ['uuid' => $uuid->getBytes()], ['id' => $id],[ParameterType::BINARY]);
             }
         }
     }
@@ -186,7 +187,7 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
                         $this->connection->update(
                           $fk['table'],
                           [$fk['tmpKey'] => $uuid->getBytes()],
-                          $queryPk,[$fk['tmpKey'] => 'binary']
+                          $queryPk,[ParameterType::BINARY]
                         );
                     }
                 }
