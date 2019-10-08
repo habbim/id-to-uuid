@@ -181,10 +181,12 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
                         }
                         /* @var $uuid UuidInterface */
                         $uuid = $this->idToUuidMap[$fetch[$fk['key']]];
+
+
                         $this->connection->update(
                           $fk['table'],
                           [$fk['tmpKey'] => $uuid->getHex()],
-                          $queryPk
+                          $queryPk,[$fk['tmpKey'] => 'binary']
                         );
                     }
                 }
