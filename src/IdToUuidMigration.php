@@ -1,4 +1,14 @@
-<?php /** @noinspection SqlResolve */
+<?php
+
+/*
+ * This file is part of the habbim/id-to-uuid project.
+ *
+ * (c) Cap Collectif <coucou@cap-collectif.com>
+ * (c) Daniel Esteve <daniel@esteve.li>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 /*
  * This file is part of the habbim/id-to-uuid project.
@@ -18,6 +28,7 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\Table;
 use Doctrine\Migrations\AbstractMigration;
 use Ramsey\Uuid\Doctrine\UuidOrderedTimeGenerator;
+use Ramsey\Uuid\UuidInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -145,7 +156,7 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
                 $id = $fetch['id'];
                 $uuid = $this->generator->generate($this->em, null);
                 $this->idToUuidMap[$id] = $uuid;
-                $this->connection->update($this->table, ['uuid' => $uuid], ['id' => $id]);
+                $this->connection->update($this->table, ['uuid' => $uuid->getBytes()], ['id' => $id]);
             }
         }
     }
@@ -168,9 +179,11 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
                         foreach ($queryPk as $key => $value) {
                             $queryPk[$key] = $fetch[$key];
                         }
+                        /* @var $uuid UuidInterface */
+                        $uuid = $this->idToUuidMap[$fetch[$fk['key']]];
                         $this->connection->update(
                           $fk['table'],
-                          [$fk['tmpKey'] => $this->idToUuidMap[$fetch[$fk['key']]]],
+                          [$fk['tmpKey'] => $uuid->getBytes()],
                           $queryPk
                         );
                     }
