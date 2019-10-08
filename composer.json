@@ -1,5 +1,5 @@
 {
-    "name": "cap-collectif/id-to-uuid",
+    "name": "habbim/id-to-uuid",
     "description": "Easily migrate from auto incremented id to uuid",
     "type": "library",
     "autoload": {
@@ -10,13 +10,18 @@
     "require": {
         "doctrine/orm": "^2.5",
         "doctrine/dbal": "^2.5",
-        "doctrine/doctrine-migrations-bundle": "~1.1"
+        "doctrine/doctrine-migrations-bundle": "~1.1",
+        "ramsey/uuid-doctrine": "^1.5"
     },
     "license": "MIT",
     "authors": [
         {
             "name": "Aurélien David",
             "email": "aurelien@cap-collectif.com"
+        },
+        {
+            "name": "Daniel Esteve",
+            "email": "daniel@esteve.li"
         }
     ],
     "require-dev": {

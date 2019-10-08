@@ -6,7 +6,7 @@ Autodetect your foreign keys and update them. **Works only on MySQL**.
 ## Installation
 
 ```
-composer require cap-collectif/id-to-uuid
+composer require habbim/id-to-uuid
 ```
 
 ## Usage
@@ -18,16 +18,19 @@ composer require cap-collectif/id-to-uuid
 <entity name="AppBundle\Entity\User" table="user">
 ---    <id name="id" column="id" type="integer">
 ---        <generator strategy="AUTO" />
-+++    <id name="id" column="id" type="guid">
-+++        <generator strategy="UUID" />
++++    <id name="id" column="id" type="uuid_binary_ordered_time">
++++        <generator strategy="CUSTOM"/>
++++        <custom-id-generator class="Ramsey\Uuid\Doctrine\UuidOrderedTimeGenerator"/>           
     </id>
  #...
 </entity>
 ```
 
-Alternatively you can use [uuid-dotrine](https://github.com/ramsey/uuid-doctrine) to add `uuid` type support.
+2. Config your symfony:
 
-2. Add a new migration:
+[Click here](https://github.com/ramsey/uuid-doctrine#innodb-optimised-binary-uuids)
+
+3. Add a new migration:
 
 ```php
 // app/DoctrineMigrations/VersionXYZ.php

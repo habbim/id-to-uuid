@@ -1,9 +1,10 @@
 <?php
 
 $header = <<<'EOF'
-This file is part of the cap-collectif/id-to-uuid project.
+This file is part of the habbim/id-to-uuid project.
 
 (c) Cap Collectif <coucou@cap-collectif.com>
+(c) Daniel Esteve <daniel@esteve.li>
 
 For the full copyright and license information, please view the LICENSE
 file that was distributed with this source code.
