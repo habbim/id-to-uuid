@@ -39,7 +39,7 @@ composer require habbim/id-to-uuid
 namespace Application\Migrations;
 
 use Doctrine\DBAL\Schema\Schema;
-use CapCollectif\IdToUuid\IdToUuidMigration;
+use Habbim\IdToUuid\IdToUuidMigration;
 
 class VersionXYZ extends IdToUuidMigration
 {
