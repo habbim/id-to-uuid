@@ -58,7 +58,7 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
         $this->generator = new UuidOrderedTimeGenerator();
     }
 
-    public function up(Schema $schema)
+    public function up(Schema $schema): void
     {
     }
 
@@ -76,7 +76,7 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
         $this->write('Successfully migrated ' . $tableName . '.id to UUIDs!');
     }
 
-    public function down(Schema $schema)
+    public function down(Schema $schema): void
     {
     }
 
