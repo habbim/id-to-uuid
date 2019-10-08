@@ -155,9 +155,9 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
             $this->write('-> Generating ' . \count($fetchs) . ' UUID(s)...');
             foreach ($fetchs as $fetch) {
                 $id = $fetch['id'];
-                $uuid = $this->generator->generate($this->em, null);
+                $uuid = $this->generator->generate($this->em, null)->getBytes();
                 $this->idToUuidMap[$id] = $uuid;
-                $this->connection->update($this->table, ['uuid' => $uuid->getBytes()], ['id' => $id],[ParameterType::BINARY]);
+                $this->connection->update($this->table, ['uuid' => $uuid], ['id' => $id],[ParameterType::BINARY]);
             }
         }
     }
@@ -180,13 +180,11 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
                         foreach ($queryPk as $key => $value) {
                             $queryPk[$key] = $fetch[$key];
                         }
-                        /* @var $uuid UuidInterface */
-                        $uuid = $this->idToUuidMap[$fetch[$fk['key']]];
 
 
                         $this->connection->update(
                           $fk['table'],
-                          [$fk['tmpKey'] => $uuid->getBytes()],
+                          [$fk['tmpKey'] => $this->idToUuidMap[$fetch[$fk['key']]]],
                           $queryPk,[ParameterType::BINARY]
                         );
                     }
