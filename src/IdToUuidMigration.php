@@ -115,12 +115,12 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
                 $key = $foreignKey->getColumns()[0];
                 if ($foreignKey->getForeignTableName() === $this->table) {
                     $fk = [
-                      'table' => $table->getName(),
-                      'key' => $key,
-                      'tmpKey' => $key . '_to_uuid',
-                      'nullable' => $this->isForeignKeyNullable($table, $key),
-                      'name' => $foreignKey->getName(),
-                      'primaryKey' => $table->getPrimaryKeyColumns(),
+                        'table' => $table->getName(),
+                        'key' => $key,
+                        'tmpKey' => $key . '_to_uuid',
+                        'nullable' => $this->isForeignKeyNullable($table, $key),
+                        'name' => $foreignKey->getName(),
+                        'primaryKey' => $table->getPrimaryKeyColumns(),
                     ];
                     if ($foreignKey->onDelete()) {
                         $fk['onDelete'] = $foreignKey->onDelete();
@@ -142,15 +142,15 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
 
     private function addUuidFields()
     {
-        $this->connection->executeQuery('ALTER TABLE ' . $this->table . ' ADD uuid BINARY(16) COMMENT \'(DC2Type:uuid_binary_ordered_time)\' FIRST');
+        $this->connection->executeQuery('ALTER TABLE `' . $this->table . '` ADD uuid BINARY(16) COMMENT \'(DC2Type:uuid_binary_ordered_time)\' FIRST');
         foreach ($this->fks as $fk) {
-            $this->connection->executeQuery('ALTER TABLE ' . $fk['table'] . ' ADD ' . $fk['tmpKey'] . ' BINARY(16) COMMENT \'(DC2Type:uuid_binary_ordered_time)\'');
+            $this->connection->executeQuery('ALTER TABLE `' . $fk['table'] . '` ADD ' . $fk['tmpKey'] . ' BINARY(16) COMMENT \'(DC2Type:uuid_binary_ordered_time)\'');
         }
     }
 
     private function generateUuidsToReplaceIds()
     {
-        $fetchs = $this->connection->fetchAll('SELECT id from ' . $this->table.' order by id ASC');
+        $fetchs = $this->connection->fetchAll('SELECT id from `' . $this->table.'` order by id ASC');
         if (\count($fetchs) > 0) {
             $this->write('-> Generating ' . \count($fetchs) . ' UUID(s)...');
             foreach ($fetchs as $fetch) {
@@ -170,26 +170,16 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
         $this->write('-> Adding UUIDs to tables with foreign keys...');
         foreach ($this->fks as $fk) {
             $selectPk = implode(',', $fk['primaryKey']);
-            $fetchs = $this->connection->fetchAll('SELECT ' . $selectPk . ', ' . $fk['key'] . ' FROM ' . $fk['table'].' order by '. $selectPk.' ASC');
-            if (\count($fetchs) > 0) {
-                $this->write('  * Adding ' . \count($fetchs) . ' UUIDs to "' . $fk['table'] . '.' . $fk['key'] . '"...');
-                foreach ($fetchs as $fetch) {
-                    // do something when the value of foreign key is not null
-                    if ($fetch[$fk['key']]) {
-                        $queryPk = array_flip($fk['primaryKey']);
-                        foreach ($queryPk as $key => $value) {
-                            $queryPk[$key] = $fetch[$key];
-                        }
-
-
-                        $this->connection->update(
-                          $fk['table'],
-                          [$fk['tmpKey'] => $this->idToUuidMap[$fetch[$fk['key']]]],
-                          $queryPk,[ParameterType::BINARY]
-                        );
-                    }
-                }
+            $this->write('  * Adding UUIDs to "' . $fk['table'] . '.' . $fk['key'] . '"...');
+            foreach ($this->idToUuidMap as $id => $uuid){
+                $this->connection->update(
+                    $fk['table'],
+                    [$fk['tmpKey'] => $uuid],
+                    [$fk['key']=>$id],
+                    [ParameterType::BINARY]
+                );
             }
+
         }
     }
 
@@ -200,12 +190,12 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
             if (isset($fk['primaryKey'])) {
                 try {
                     // drop primary key if not already dropped
-                    $this->connection->executeQuery('ALTER TABLE ' . $fk['table'] . ' DROP PRIMARY KEY');
+                    $this->connection->executeQuery('ALTER TABLE `' . $fk['table'] . '` DROP PRIMARY KEY');
                 } catch (\Exception $e) {
                 }
             }
-            $this->connection->executeQuery('ALTER TABLE ' . $fk['table'] . ' DROP FOREIGN KEY ' . $fk['name']);
-            $this->connection->executeQuery('ALTER TABLE ' . $fk['table'] . ' DROP COLUMN ' . $fk['key']);
+            $this->connection->executeQuery('ALTER TABLE `' . $fk['table'] . '` DROP FOREIGN KEY `' . $fk['name'].'`');
+            $this->connection->executeQuery('ALTER TABLE `' . $fk['table'] . '` DROP COLUMN `' . $fk['key'].'`');
         }
     }
 
@@ -213,16 +203,16 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
     {
         $this->write('-> Renaming temporary uuid foreign keys to previous foreign keys names...');
         foreach ($this->fks as $fk) {
-            $this->connection->executeQuery('ALTER TABLE ' . $fk['table'] . ' CHANGE ' . $fk['tmpKey'] . ' ' . $fk['key'] . ' BINARY(16) ' . ($fk['nullable'] ? '' : 'NOT NULL ') . 'COMMENT \'(DC2Type:uuid_binary_ordered_time)\'');
+            $this->connection->executeQuery('ALTER TABLE `' . $fk['table'] . '` CHANGE `' . $fk['tmpKey'] . '` ' . $fk['key'] . ' BINARY(16) ' . ($fk['nullable'] ? '' : 'NOT NULL ') . 'COMMENT \'(DC2Type:uuid_binary_ordered_time)\'');
         }
     }
 
     private function dropIdPrimaryKeyAndSetUuidToPrimaryKey()
     {
         $this->write('-> Creating the uuid primary key...');
-        $this->connection->executeQuery('ALTER TABLE ' . $this->table . ' DROP PRIMARY KEY, DROP COLUMN id');
-        $this->connection->executeQuery('ALTER TABLE ' . $this->table . ' CHANGE uuid id BINARY(16) NOT NULL COMMENT \'(DC2Type:uuid_binary_ordered_time)\'');
-        $this->connection->executeQuery('ALTER TABLE ' . $this->table . ' ADD PRIMARY KEY (id)');
+        $this->connection->executeQuery('ALTER TABLE `' . $this->table . '` DROP PRIMARY KEY, DROP COLUMN id');
+        $this->connection->executeQuery('ALTER TABLE `' . $this->table . '` CHANGE uuid id BINARY(16) NOT NULL COMMENT \'(DC2Type:uuid_binary_ordered_time)\'');
+        $this->connection->executeQuery('ALTER TABLE `' . $this->table . '` ADD PRIMARY KEY (id)');
     }
 
     private function restoreConstraintsAndIndexes()
@@ -231,14 +221,14 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
             if (isset($fk['primaryKey'])) {
                 try {
                     // restore primary key if not already restored
-                    $this->connection->executeQuery('ALTER TABLE ' . $fk['table'] . ' ADD PRIMARY KEY (' . implode(',', $fk['primaryKey']) . ')');
+                    $this->connection->executeQuery('ALTER TABLE `' . $fk['table'] . '` ADD PRIMARY KEY (' . implode(',', $fk['primaryKey']) . ')');
                 } catch (\Exception $e) {
                 }
             }
-            $this->connection->executeQuery('ALTER TABLE ' . $fk['table'] . ' ADD CONSTRAINT ' . $fk['name'] . ' FOREIGN KEY (' . $fk['key'] . ') REFERENCES ' . $this->table . ' (id)' .
-              (isset($fk['onDelete']) ? ' ON DELETE ' . $fk['onDelete'] : '')
+            $this->connection->executeQuery('ALTER TABLE `' . $fk['table'] . '` ADD CONSTRAINT `' . $fk['name'] . '` FOREIGN KEY (' . $fk['key'] . ') REFERENCES ' . $this->table . ' (id)' .
+                (isset($fk['onDelete']) ? ' ON DELETE ' . $fk['onDelete'] : '')
             );
-            $this->connection->executeQuery('CREATE INDEX ' . str_replace('FK_', 'IDX_', $fk['name']) . ' ON ' . $fk['table'] . ' (' . $fk['key'] . ')');
+            $this->connection->executeQuery('CREATE INDEX `' . str_replace('FK_', 'IDX_', $fk['name']) . '` ON ' . $fk['table'] . ' (' . $fk['key'] . ')');
         }
     }
 }
