@@ -28,6 +28,7 @@ use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\Table;
 use Doctrine\Migrations\AbstractMigration;
+use Ramsey\Uuid\Doctrine\UuidGenerator;
 use Ramsey\Uuid\Doctrine\UuidOrderedTimeGenerator;
 use Ramsey\Uuid\UuidInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
@@ -67,7 +68,7 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
         $this->em = $container->get('doctrine')->getManager();
         $this->connection = $this->em->getConnection();
         $this->schemaManager = $this->connection->getSchemaManager();
-        $this->generator = new UuidOrderedTimeGenerator();
+        $this->generator = new UuidGenerator();
     }
 
     public function up(Schema $schema): void
@@ -142,9 +143,9 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
 
     private function addUuidFields()
     {
-        $this->connection->executeQuery('ALTER TABLE `' . $this->table . '` ADD uuid CHAR(36) COMMENT \'(DC2Type:uuid)\' FIRST');
+        $this->connection->executeQuery('ALTER TABLE `' . $this->table . '` ADD uuid CHAR(36) NOT NULL COMMENT \'(DC2Type:uuid)\' FIRST');
         foreach ($this->fks as $fk) {
-            $this->connection->executeQuery('ALTER TABLE `' . $fk['table'] . '` ADD ' . $fk['tmpKey'] . ' CHAR(36) COMMENT \'(DC2Type:uuid)\'');
+            $this->connection->executeQuery('ALTER TABLE `' . $fk['table'] . '` ADD ' . $fk['tmpKey'] . ' CHAR(36) NOT NULL COMMENT \'(DC2Type:uuid)\'');
         }
     }
 
