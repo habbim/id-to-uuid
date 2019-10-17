@@ -28,6 +28,7 @@ use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\Table;
 use Doctrine\Migrations\AbstractMigration;
+use Ramsey\Uuid\Doctrine\UuidGenerator;
 use Ramsey\Uuid\Doctrine\UuidOrderedTimeGenerator;
 use Ramsey\Uuid\UuidInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
@@ -67,7 +68,7 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
         $this->em = $container->get('doctrine')->getManager();
         $this->connection = $this->em->getConnection();
         $this->schemaManager = $this->connection->getSchemaManager();
-        $this->generator = new UuidOrderedTimeGenerator();
+        $this->generator = new UuidGenerator();
     }
 
     public function up(Schema $schema): void
@@ -155,7 +156,7 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
             $this->write('-> Generating ' . \count($fetchs) . ' UUID(s)...');
             foreach ($fetchs as $fetch) {
                 $id = $fetch['id'];
-                $uuid = $this->generator->generate($this->em, null)->getBytes();
+                $uuid = $this->generator->generate($this->em, null)->toString();
                 $this->idToUuidMap[$id] = $uuid;
                 $this->connection->update($this->table, ['uuid' => $uuid], ['id' => $id],[ParameterType::STRING]);
             }
