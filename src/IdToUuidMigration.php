@@ -142,9 +142,9 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
 
     private function addUuidFields()
     {
-        $this->connection->executeQuery('ALTER TABLE `' . $this->table . '` ADD uuid BINARY(16) COMMENT \'(DC2Type:uuid_binary_ordered_time)\' FIRST');
+        $this->connection->executeQuery('ALTER TABLE `' . $this->table . '` ADD uuid CHAR(36) COMMENT \'(DC2Type:uuid)\' FIRST');
         foreach ($this->fks as $fk) {
-            $this->connection->executeQuery('ALTER TABLE `' . $fk['table'] . '` ADD ' . $fk['tmpKey'] . ' BINARY(16) COMMENT \'(DC2Type:uuid_binary_ordered_time)\'');
+            $this->connection->executeQuery('ALTER TABLE `' . $fk['table'] . '` ADD ' . $fk['tmpKey'] . ' CHAR(36) COMMENT \'(DC2Type:uuid)\'');
         }
     }
 
@@ -157,7 +157,7 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
                 $id = $fetch['id'];
                 $uuid = $this->generator->generate($this->em, null)->getBytes();
                 $this->idToUuidMap[$id] = $uuid;
-                $this->connection->update($this->table, ['uuid' => $uuid], ['id' => $id],[ParameterType::BINARY]);
+                $this->connection->update($this->table, ['uuid' => $uuid], ['id' => $id],[ParameterType::STRING]);
             }
         }
     }
@@ -176,7 +176,7 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
                     $fk['table'],
                     [$fk['tmpKey'] => $uuid],
                     [$fk['key']=>$id],
-                    [ParameterType::BINARY]
+                    [ParameterType::STRING]
                 );
             }
 
@@ -203,7 +203,7 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
     {
         $this->write('-> Renaming temporary uuid foreign keys to previous foreign keys names...');
         foreach ($this->fks as $fk) {
-            $this->connection->executeQuery('ALTER TABLE `' . $fk['table'] . '` CHANGE `' . $fk['tmpKey'] . '` ' . $fk['key'] . ' BINARY(16) ' . ($fk['nullable'] ? '' : 'NOT NULL ') . 'COMMENT \'(DC2Type:uuid_binary_ordered_time)\'');
+            $this->connection->executeQuery('ALTER TABLE `' . $fk['table'] . '` CHANGE `' . $fk['tmpKey'] . '` ' . $fk['key'] . ' CHAR(36) ' . ($fk['nullable'] ? '' : 'NOT NULL ') . 'COMMENT \'(DC2Type:uuid)\'');
         }
     }
 
@@ -211,7 +211,7 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
     {
         $this->write('-> Creating the uuid primary key...');
         $this->connection->executeQuery('ALTER TABLE `' . $this->table . '` DROP PRIMARY KEY, DROP COLUMN id');
-        $this->connection->executeQuery('ALTER TABLE `' . $this->table . '` CHANGE uuid id BINARY(16) NOT NULL COMMENT \'(DC2Type:uuid_binary_ordered_time)\'');
+        $this->connection->executeQuery('ALTER TABLE `' . $this->table . '` CHANGE uuid id CHAR(36) NOT NULL COMMENT \'(DC2Type:uuid)\'');
         $this->connection->executeQuery('ALTER TABLE `' . $this->table . '` ADD PRIMARY KEY (id)');
     }
 
