@@ -143,9 +143,9 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
 
     private function addUuidFields()
     {
-        $this->connection->executeQuery('ALTER TABLE `' . $this->table . '` ADD uuid CHAR(36) COMMENT \'(DC2Type:uuid)\' FIRST');
+        $this->connection->executeQuery('ALTER TABLE `' . $this->table . '` ADD uuid CHAR(36) NOT NULL COMMENT \'(DC2Type:uuid)\' FIRST');
         foreach ($this->fks as $fk) {
-            $this->connection->executeQuery('ALTER TABLE `' . $fk['table'] . '` ADD ' . $fk['tmpKey'] . ' CHAR(36) COMMENT \'(DC2Type:uuid)\'');
+            $this->connection->executeQuery('ALTER TABLE `' . $fk['table'] . '` ADD ' . $fk['tmpKey'] . ' CHAR(36) NOT NULL COMMENT \'(DC2Type:uuid)\'');
         }
     }
 
