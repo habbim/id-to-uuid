@@ -179,7 +179,6 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
                     [$fk['key']=>$id]
                 );
             }
-
         }
     }
 
@@ -203,7 +202,14 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
     {
         $this->write('-> Renaming temporary uuid foreign keys to previous foreign keys names...');
         foreach ($this->fks as $fk) {
-            $this->connection->executeQuery('ALTER TABLE `' . $fk['table'] . '` CHANGE `' . $fk['tmpKey'] . '` ' . $fk['key'] . ' CHAR(36) ' . ($fk['nullable'] ? '' : 'NOT NULL ') . 'COMMENT \'(DC2Type:uuid)\'');
+            $this->connection->executeQuery('ALTER TABLE `' . $fk['table'] . '` CHANGE `' . $fk['tmpKey'] . '` ' . $fk['key'] . ' CHAR(36) ' . ($fk['nullable'] ? 'NULL ' : 'NOT NULL ') . 'COMMENT \'(DC2Type:uuid)\'');
+            if($fk['nullable']){
+                $this->connection->update(
+                    $fk['table'],
+                    [$fk['key'] => null],
+                    [$fk['key']=>'']
+                );
+            }
         }
     }
 
