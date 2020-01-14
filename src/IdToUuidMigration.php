@@ -75,7 +75,7 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
     {
     }
 
-    public function migrate(string $tableName)
+    public function migrate(string $tableName, array $extraRelationships = [])
     {
         $this->write('Migrating ' . $tableName . '.id to UUIDs...');
         $this->prepare($tableName);
@@ -86,6 +86,9 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
         $this->renameNewFKsToPreviousNames();
         $this->dropIdPrimaryKeyAndSetUuidToPrimaryKey();
         $this->restoreConstraintsAndIndexes();
+        if(!empty($extraRelationships)){
+            $this->changeToUUIDExtraRelationships($extraRelationships);
+        }
         $this->write('Successfully migrated ' . $tableName . '.id to UUIDs!');
     }
 
@@ -163,6 +166,21 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
         }
     }
 
+    private function changeToUUIDExtraRelationships($extraRelationships){
+        $this->write('-> Adding UUIDs to tables extra relations...');
+
+        foreach ($extraRelationships as $extraRelationship){
+            $this->write('  * Adding UUIDs to "' . $extraRelationship['table'] . '.' . $extraRelationship['key'] . '"...');
+            foreach ($this->idToUuidMap as $id => $uuid){
+                $this->connection->update(
+                    $extraRelationship['table'],
+                    [$extraRelationship['key'] => $uuid],
+                    array_merge([$extraRelationship['key']=>$id],$extraRelationship['findExtra'])
+                );
+            }
+        }
+    }
+
     private function addThoseUuidsToTablesWithFK()
     {
         if (0 === \count($this->fks)) {
@@ -170,7 +188,6 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
         }
         $this->write('-> Adding UUIDs to tables with foreign keys...');
         foreach ($this->fks as $fk) {
-            $selectPk = implode(',', $fk['primaryKey']);
             $this->write('  * Adding UUIDs to "' . $fk['table'] . '.' . $fk['key'] . '"...');
             foreach ($this->idToUuidMap as $id => $uuid){
                 $this->connection->update(
