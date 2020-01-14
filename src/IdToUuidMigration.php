@@ -63,6 +63,8 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
      */
     protected $schemaManager;
 
+    protected $extraRelationships;
+
     public function setContainer(ContainerInterface $container = null)
     {
         $this->em = $container->get('doctrine')->getManager();
@@ -77,13 +79,12 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
 
     public function migrate(string $tableName, array $extraRelationships = [])
     {
+        $this->extraRelationships = $extraRelationships;
         $this->write('Migrating ' . $tableName . '.id to UUIDs...');
         $this->prepare($tableName);
         $this->addUuidFields();
         $this->generateUuidsToReplaceIds();
-        if(!empty($extraRelationships)){
-            $this->changeToUUIDExtraRelationships($extraRelationships);
-        }
+        $this->changeToUUIDExtraRelationships();
         $this->addThoseUuidsToTablesWithFK();
         $this->deletePreviousFKs();
         $this->renameNewFKsToPreviousNames();
@@ -151,6 +152,11 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
         foreach ($this->fks as $fk) {
             $this->connection->executeQuery('ALTER TABLE `' . $fk['table'] . '` ADD ' . $fk['tmpKey'] . ' CHAR(36) NOT NULL COMMENT \'(DC2Type:uuid)\'');
         }
+
+        foreach ($this->extraRelationships as &$relationship){
+            $relationship['tmpKey'] = $relationship['key'] . '_to_uuid';
+            $this->connection->executeQuery('ALTER TABLE `' . $relationship['table'] . '` ADD ' . $relationship['tmpKey'] . ' CHAR(36) NOT NULL COMMENT \'(DC2Type:uuid)\'');
+        }
     }
 
     private function generateUuidsToReplaceIds()
@@ -167,18 +173,19 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
         }
     }
 
-    private function changeToUUIDExtraRelationships($extraRelationships){
+    private function changeToUUIDExtraRelationships(){
         $this->write('-> Adding UUIDs to tables extra relations...');
-
-        foreach ($extraRelationships as $extraRelationship){
+        foreach ($this->extraRelationships as $extraRelationship){
             $this->write('  * Adding UUIDs to "' . $extraRelationship['table'] . '.' . $extraRelationship['key'] . '"...');
             foreach ($this->idToUuidMap as $id => $uuid){
                 $this->connection->update(
                     $extraRelationship['table'],
-                    [$extraRelationship['key'] => $uuid],
+                    [$extraRelationship['tmpKey'] => $uuid],
                     array_merge([$extraRelationship['key']=>$id],$extraRelationship['findExtra'])
                 );
             }
+            $this->connection->executeQuery('ALTER TABLE `' . $extraRelationship['table'] . '` DROP COLUMN `' . $extraRelationship['key'].'`');
+            $this->connection->executeQuery('ALTER TABLE `' . $extraRelationship['table'] . '` CHANGE `' . $extraRelationship['tmpKey'] . '` ' . $extraRelationship['key'] . ' CHAR(36) '  . ' COMMENT \'(DC2Type:uuid)\'');
         }
     }
 
