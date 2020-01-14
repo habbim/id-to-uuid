@@ -81,14 +81,15 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
         $this->prepare($tableName);
         $this->addUuidFields();
         $this->generateUuidsToReplaceIds();
+        if(!empty($extraRelationships)){
+            $this->changeToUUIDExtraRelationships($extraRelationships);
+        }
         $this->addThoseUuidsToTablesWithFK();
         $this->deletePreviousFKs();
         $this->renameNewFKsToPreviousNames();
         $this->dropIdPrimaryKeyAndSetUuidToPrimaryKey();
         $this->restoreConstraintsAndIndexes();
-        if(!empty($extraRelationships)){
-            $this->changeToUUIDExtraRelationships($extraRelationships);
-        }
+
         $this->write('Successfully migrated ' . $tableName . '.id to UUIDs!');
     }
 
