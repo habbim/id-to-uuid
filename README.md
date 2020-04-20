@@ -20,7 +20,7 @@ composer require habbim/id-to-uuid
 ---        <generator strategy="AUTO" />
 +++    <id name="id" column="id" type="uuid_binary_ordered_time">
 +++        <generator strategy="CUSTOM"/>
-+++        <custom-id-generator class="Ramsey\Uuid\Doctrine\UuidOrderedTimeGenerator"/>           
++++        <custom-id-generator class="Ramsey\Uuid\Doctrine\UuidGenerator"/>           
     </id>
  #...
 </entity>
